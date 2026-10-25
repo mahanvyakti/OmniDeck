@@ -19,13 +19,15 @@ endif
 
 APK_DEBUG := app/build/outputs/apk/debug/app-debug.apk
 
-.PHONY: help build release test clean install push-install start stop restart logcat test-e2e permissions screenshot status
+.PHONY: help build release test coverage coverage-check clean install push-install start stop restart logcat test-e2e permissions screenshot status
 
 help:
 	@echo "OmniDeck Build & Automation Recipes:"
 	@echo "  make build           - Build debug APK"
 	@echo "  make release         - Build release APK"
 	@echo "  make test            - Run JVM unit test suite"
+	@echo "  make coverage        - Generate JaCoCo code coverage report (HTML & XML)"
+	@echo "  make coverage-check  - Verify code coverage against minimum thresholds"
 	@echo "  make clean           - Clean build artifacts and Gradle caches"
 	@echo "  make install         - Install debug APK via standard ADB (TV_HOST=$(TV_HOST))"
 	@echo "  make push-install    - Install debug APK via standalone python bridge (tools/b64push.py)"
@@ -48,6 +50,13 @@ release:
 
 test:
 	$(GRADLEW) testDebugUnitTest
+
+coverage:
+	$(GRADLEW) jacocoTestReport
+	@echo "Coverage report: app/build/reports/jacoco/jacocoTestReport/html/index.html"
+
+coverage-check:
+	$(GRADLEW) jacocoTestCoverageVerification
 
 clean:
 	$(GRADLEW) clean
