@@ -1,0 +1,77 @@
+name: 🐛 Bug Report
+description: Report a bug, crash, or unexpected behavior on TV or Companion Web Hub
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting an issue! Please check existing issues before submitting to avoid duplicates.
+
+  - type: checkboxes
+    id: pre-checks
+    attributes:
+      label: Pre-Flight Verification
+      description: Please verify these basic TV & network checks before submitting:
+      options:
+        - label: My TV and companion device (phone/PC) are on the **exact same local Wi-Fi/LAN subnet**.
+          required: true
+        - label: The 6-digit PIN on the TV matches the PIN entered in the browser.
+          required: true
+        - label: I am using JDK 17 if reporting a Gradle build or compilation failure.
+          required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: "e.g., When attempting to upload a file over 50 MB, the companion web hub reports..."
+    validations:
+      required: true
+
+  - type: input
+    id: tv-model
+    attributes:
+      label: TV Hardware Model & Android Version
+      description: Which Android TV model and OS version are you running?
+      placeholder: "e.g., OnePlus 32 Y1S (Android 11 / API 30), Xiaomi Mi TV 4X (Android 9 / API 28), Chromecast with Google TV"
+    validations:
+      required: true
+
+  - type: input
+    id: companion-device
+    attributes:
+      label: Companion Client Details
+      description: What device and browser were you connecting with?
+      placeholder: "e.g., Samsung Galaxy S25 Ultra (Chrome 130), MacBook Pro (Safari 18), Windows 11 (Edge)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to reproduce the issue.
+      placeholder: |
+        1. Open OmniDeck on TV.
+        2. Navigate to http://<TV_IP>:8080 in Chrome on phone.
+        3. Enter PIN and click Pair.
+        4. Observe error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs Actual Behavior
+      description: What did you expect to happen versus what actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logcat / Terminal Output
+      description: Copy and paste relevant `adb logcat` output or terminal errors here.
+      render: shell

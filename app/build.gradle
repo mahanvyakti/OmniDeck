@@ -1,5 +1,10 @@
 plugins {
     id 'com.android.application'
+    id 'jacoco'
+}
+
+jacoco {
+    toolVersion = "0.8.11"
 }
 
 android {
@@ -23,6 +28,8 @@ android {
         }
         debug {
             minifyEnabled false
+            enableUnitTestCoverage true
+            testCoverageEnabled true
         }
     }
 
@@ -30,10 +37,75 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            returnDefaultValues = true
+        }
+    }
 }
 
 dependencies {
     implementation 'androidx.core:core:1.12.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.json:json:20231013'
+}
+
+def fileFilter = [
+    '**/R.class',
+    '**/R$*.class',
+    '**/BuildConfig.*',
+    '**/Manifest*.*',
+    '**/*$ViewInjector*.*',
+    '**/*$ViewBinder*.*',
+    '**/*$Lambda$*.*',
+    '**/*$ExternalSynthetic*.*'
+]
+
+tasks.register('jacocoTestReport', JacocoReport) {
+    dependsOn 'testDebugUnitTest'
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    def bDir = layout.buildDirectory.get().asFile
+    def javaClasses = fileTree(dir: "${bDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes", excludes: fileFilter)
+    def javaSrc = "${projectDir}/src/main/java"
+
+    sourceDirectories.setFrom(files([javaSrc]))
+    classDirectories.setFrom(files([javaClasses]))
+    executionData.setFrom(fileTree(dir: bDir, includes: [
+        'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec',
+        'jacoco/testDebugUnitTest.exec'
+    ]))
+}
+
+tasks.register('jacocoTestCoverageVerification', JacocoCoverageVerification) {
+    dependsOn 'jacocoTestReport'
+
+    def bDir = layout.buildDirectory.get().asFile
+    def javaClasses = fileTree(dir: "${bDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes", excludes: fileFilter)
+    def javaSrc = "${projectDir}/src/main/java"
+
+    sourceDirectories.setFrom(files([javaSrc]))
+    classDirectories.setFrom(files([javaClasses]))
+    executionData.setFrom(fileTree(dir: bDir, includes: [
+        'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec',
+        'jacoco/testDebugUnitTest.exec'
+    ]))
+
+    violationRules {
+        rule {
+            element = 'BUNDLE'
+            limit {
+                counter = 'INSTRUCTION'
+                value = 'COVEREDRATIO'
+                minimum = 0.30
+            }
+        }
+    }
 }
