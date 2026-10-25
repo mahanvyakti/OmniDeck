@@ -1,0 +1,34 @@
+# Build & IDE artifacts
+*.iml
+.gradle/
+.idea/
+.DS_Store
+build/
+*/build/
+captures/
+.externalNativeBuild
+.cxx
+*.apk
+*.aab
+
+# Local properties & machine paths
+local.properties
+.env
+
+# ADB Keys & Credentials (Never commit!)
+tools/adbkey
+tools/adbkey.pub
+tools/adbkey/
+*.key
+*.pub
+
+# Python virtual environment & cache
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.log
+*.b64
+
+docs/local/
+audits/

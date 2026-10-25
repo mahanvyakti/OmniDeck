@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OmniDeck</string>
+    <string name="notification_channel_name">OmniDeck Service</string>
+    <string name="notification_channel_desc">Hosts local companion server and resource monitoring</string>
+    <string name="accessibility_desc">Enables system-wide screenshot capture and remote companion typing across apps.</string>
+</resources>

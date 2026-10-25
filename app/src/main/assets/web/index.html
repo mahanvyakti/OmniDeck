@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OmniDeck - By Mahan Vyakti</title>
+<style>
+  :root {
+    --bg: #090A0F;
+    --card: #11131A;
+    --card-border: #1E2230;
+    --card-hover: #181B26;
+    --accent: #00A8FF;
+    --accent-glow: rgba(0, 168, 255, 0.15);
+    --green: #00E676;
+    --amber: #FFB300;
+    --purple: #8B5CF6;
+    --red: #FF5252;
+    --text: #F3F5F9;
+    --text-dim: #9AA5B9;
+    --text-muted: #5C667A;
+    --radius: 16px;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.5;
+    padding: 20px 16px 48px;
+    max-width: 1040px;
+    margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--card-border);
+    margin-bottom: 24px;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-logo {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, #00A8FF 0%, #8B5CF6 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 22px; color: #fff;
+    box-shadow: 0 4px 20px var(--accent-glow);
+  }
+  .brand-text h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .creator-badge {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    color: var(--accent); letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .tv-badge {
+    background: var(--card); border: 1px solid var(--card-border);
+    padding: 8px 16px; border-radius: 24px; font-size: 13px; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  
+  /* Bento Grid */
+  .bento-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 16px;
+  }
+  .bento-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .col-12 { grid-column: span 12; }
+  .col-8 { grid-column: span 8; }
+  .col-6 { grid-column: span 6; }
+  .col-4 { grid-column: span 4; }
+  @media (max-width: 840px) {
+    .col-8, .col-6, .col-4 { grid-column: span 12; }
+  }
+
+  .card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 14px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-dim); display: flex; align-items: center; gap: 8px;
+  }
+  .btn {
+    background: var(--accent); color: #fff; border: none;
+    padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: 13px;
+    cursor: pointer; transition: all 0.2s; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: #0090dc; transform: translateY(-1px); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+  .btn-secondary { background: var(--card-border); color: var(--text); }
+  .btn-secondary:hover { background: #2A3042; }
+  .btn-danger { background: rgba(255, 82, 82, 0.15); color: var(--red); border: 1px solid rgba(255, 82, 82, 0.3); }
+  .btn-danger:hover { background: var(--red); color: #fff; }
+
+  /* PIN input */
+  .pin-box {
+    display: flex; gap: 10px; justify-content: center; margin: 20px 0;
+  }
+  .pin-input {
+    letter-spacing: 14px; font-size: 28px; font-weight: 800; text-align: center;
+    padding: 14px; width: 100%; max-width: 320px; border-radius: 12px;
+    background: #000; border: 1px solid var(--accent); color: var(--accent);
+    outline: none; margin: 0 auto; display: block;
+  }
+
+  /* Diagnostics Bar & Graphs */
+  .metric-huge { font-size: 32px; font-weight: 800; color: var(--text); line-height: 1.1; }
+  .metric-sub { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+  .meter-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin: 12px 0 8px; }
+  .meter-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+
+  /* Storage Donut Canvas */
+  .storage-wrap { display: flex; align-items: center; gap: 20px; }
+  .storage-legend { display: flex; flex-direction: column; gap: 8px; font-size: 12px; flex: 1; }
+  .legend-item { display: flex; justify-content: space-between; align-items: center; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 6px; }
+
+  /* Multi-Device List */
+  .device-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .device-item {
+    background: rgba(255,255,255,0.02); border: 1px solid var(--card-border);
+    border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .device-icon { font-size: 18px; margin-right: 10px; }
+
+  /* NoteBoard */
+  .note-area {
+    width: 100%; height: 120px; background: #000; border: 1px solid var(--card-border);
+    border-radius: 12px; color: var(--text); padding: 14px; font-size: 15px;
+    font-family: inherit; resize: vertical; outline: none; margin-bottom: 12px;
+  }
+  .note-area:focus { border-color: var(--accent); }
+
+  /* Dropzone */
+  .drop-zone {
+    border: 2px dashed var(--card-border); border-radius: 14px; padding: 28px 16px;
+    text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.01);
+  }
+  .drop-zone:hover { border-color: var(--accent); background: var(--accent-glow); }
+  .file-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; border-bottom: 1px solid var(--card-border); font-size: 14px;
+  }
+  .file-name { font-weight: 500; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #181B26; color: #fff; padding: 12px 24px; border-radius: 30px;
+    font-size: 13px; font-weight: 600; border: 1px solid var(--accent);
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  }
+  footer {
+    text-align: center; margin-top: 40px; font-size: 12px; color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo">&#10022;</div>
+    <div class="brand-text">
+      <h1>OmniDeck TV</h1>
+      <span class="creator-badge">By Mahan Vyakti</span>
+    </div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <button class="btn btn-secondary btn-sm" id="btn-screenshot" onclick="captureScreenshot()" title="Capture and download TV screenshot">
+      &#128248; Capture TV
+    </button>
+    <div class="tv-badge">
+      <div class="dot" id="live-dot"></div>
+      <span id="tv-model-label">OnePlus TV</span>
+    </div>
+  </div>
+</header>
+
+<!-- Pairing Card (Shown when unpaired) -->
+<div id="pairing-card" class="bento-card col-12" style="max-width: 480px; margin: 40px auto; text-align: center; display: none;">
+  <div style="font-size: 36px; margin-bottom: 10px;">&#128274;</div>
+  <h2 style="font-size: 18px; margin-bottom: 8px;">Device Pairing Required</h2>
+  <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 20px;">
+    Enter the 6-digit rolling PIN displayed on your TV screen to pair securely.
+  </p>
+  <input type="text" id="pin-input" class="pin-input" maxlength="6" placeholder="000000" inputmode="numeric">
+  <div style="margin-top: 14px; text-align: left;">
+    <label style="font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase;">Device Identifier</label>
+    <input type="text" id="device-name-input" style="width: 100%; margin-top: 5px; padding: 10px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 13px;" placeholder="Detecting your device model...">
+  </div>
+  <button class="btn" style="width: 100%; max-width: 320px; margin-top: 18px; justify-content: center;" onclick="submitPin()">
+    Pair with TV
+  </button>
+</div>
+
+<!-- Main Bento Box UI -->
+<main id="main-content" class="bento-grid" style="display: none;">
+
+  <!-- Card 1: RAM & System Doctor (col-4) -->
+  <div class="bento-card col-4">
+    <div class="card-header">
+      <span class="card-title">&#9889; System Doctor</span>
+      <button class="btn btn-secondary btn-sm" onclick="purgeRam()">Purge</button>
+    </div>
+    <div class="metric-huge" id="ram-pct">--%</div>
+    <div class="metric-sub" id="ram-detail">Calculating RAM...</div>
+    <div class="meter-bar"><div id="ram-bar" class="meter-fill" style="width: 0%; background: var(--accent);"></div></div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+      Dynamic protection active (Launcher, IME &amp; Vendor safe)
+    </div>
+  </div>
+
+  <!-- Card 2: Live Network & Speed Check (col-4) -->
+  <div class="bento-card col-4">
+    <div class="card-header">
+      <span class="card-title">&#128246; Network &amp; Speed</span>
+      <button class="btn btn-secondary btn-sm" id="btn-speed" onclick="runSpeedTest()">Test Speed</button>
+    </div>
+    <div class="metric-huge" id="speed-display">-- Mbps</div>
+    <div class="metric-sub" id="net-throughput">RX: 0 KB/s | TX: 0 KB/s</div>
+    <div class="meter-bar"><div id="speed-bar" class="meter-fill" style="width: 0%; background: var(--green);"></div></div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;" id="speed-sub">
+      Tap 'Test Speed' to measure TV throughput
+    </div>
+  </div>
+
+  <!-- Card 3: Storage Breakdown & Donut (col-4) -->
+  <div class="bento-card col-4">
+    <div class="card-header">
+      <span class="card-title">&#128190; Storage Analysis</span>
+      <span style="font-size: 11px; color: var(--green); font-weight: 600;">500MB Reserve</span>
+    </div>
+    <div class="storage-wrap">
+      <canvas id="storage-canvas" width="80" height="80"></canvas>
+      <div class="storage-legend">
+        <div class="legend-item">
+          <span><span class="legend-dot" style="background: var(--green);"></span>Free</span>
+          <span id="st-free" style="font-weight: 600;">-- GB</span>
+        </div>
+        <div class="legend-item">
+          <span><span class="legend-dot" style="background: var(--accent);"></span>Apps &amp; Data</span>
+          <span id="st-apps">-- MB</span>
+        </div>
+        <div class="legend-item">
+          <span><span class="legend-dot" style="background: var(--amber);"></span>Media</span>
+          <span id="st-media">-- MB</span>
+        </div>
+        <div class="legend-item">
+          <span><span class="legend-dot" style="background: #00E5FF;"></span>Downloads</span>
+          <span id="st-dl">-- MB</span>
+        </div>
+        <div class="legend-item">
+          <span><span class="legend-dot" style="background: var(--purple);"></span>System</span>
+          <span id="st-sys">-- GB</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 4: Multi-Device Manager (col-6) -->
+  <div class="bento-card col-6">
+    <div class="card-header">
+      <span class="card-title">&#128241; Connected Devices</span>
+      <span id="device-count" style="font-size: 12px; color: var(--accent); font-weight: 600;">1 Active</span>
+    </div>
+    <div class="device-list" id="device-list">
+      <!-- Populated dynamically -->
+    </div>
+  </div>
+
+  <!-- Card 5: NoteBoard (Hindi & Multilingual Clipboard with History) (col-6) -->
+  <div class="bento-card col-6">
+    <div class="card-header">
+      <span class="card-title">&#9998; Shared Living Room Clipboard</span>
+      <span style="font-size: 11px; color: var(--accent);">Devanagari &amp; Unicode Ready</span>
+    </div>
+    <textarea id="note-input" class="note-area" placeholder="Type text, Hindi (नमस्ते), URLs, or notes to send directly to TV clipboard..."></textarea>
+    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+      <button class="btn" style="flex: 1; justify-content: center;" onclick="sendNote()">Send to TV Clipboard</button>
+      <button class="btn btn-secondary" onclick="fetchNote()">Refresh</button>
+      <button class="btn btn-secondary" style="color: var(--danger);" onclick="clearClipboard()">Clear</button>
+    </div>
+    <div style="font-size: 11px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Recent Clipboard History</div>
+    <div id="clip-history-list" style="max-height: 140px; overflow-y: auto;"></div>
+  </div>
+
+  <!-- Card 6: Bidirectional File Vault (col-12) -->
+  <div class="bento-card col-12">
+    <div class="card-header">
+      <span class="card-title">&#128193; File Vault (/sdcard/Download/OmniDeck)</span>
+      <button class="btn btn-secondary btn-sm" onclick="loadFiles()">Refresh Files</button>
+    </div>
+
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-picker').click()">
+      <div style="font-size: 32px; margin-bottom: 8px;">&#9729;</div>
+      <div style="font-weight: 600; font-size: 15px;">Drop files here or click to upload</div>
+      <div style="font-size: 12px; color: var(--text-dim); margin-top: 4px;">
+        Movies, Audio, Photos, APKs (Transfers directly to TV storage)
+      </div>
+      <input type="file" id="file-picker" style="display: none;" onchange="handleFileSelect(event)">
+    </div>
+
+    <div id="upload-progress" style="display: none; margin-top: 14px;">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
+        <span id="upload-status">Uploading...</span>
+        <span id="upload-percent">0%</span>
+      </div>
+      <div class="meter-bar"><div id="upload-bar" class="meter-fill" style="width: 0%; background: var(--green);"></div></div>
+    </div>
+
+    <div id="file-list" style="margin-top: 16px;"></div>
+  </div>
+
+</main>
+
+<div id="toast" class="toast"></div>
+
+<footer>
+  OmniDeck Living Room Suite &bull; Created by <strong>Mahan Vyakti</strong> &bull; Zero Framework Pure-Java Architecture
+</footer>
+
+<script>
+  let token = localStorage.getItem("omnideck_token") || "";
+
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.innerText = msg;
+    t.style.opacity = "1";
+    setTimeout(() => { t.style.opacity = "0"; }, 3000);
+  }
+
+  function getHeaders() {
+    return token ? { "Authorization": "Bearer " + token } : {};
+  }
+
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function getOsIcon(os) {
+    switch (os) {
+      case 'apple': return '&#63743;';
+      case 'windows': return '&#8862;';
+      case 'android': return '&#9670;';
+      case 'linux': return '&#9881;';
+      default: return '&#128187;';
+    }
+  }
+
+  async function checkAuthAndLoad() {
+    try {
+      const res = await fetch("/api/status", { headers: getHeaders() });
+      if (res.status === 401) {
+        document.getElementById("pairing-card").style.display = "block";
+        document.getElementById("main-content").style.display = "none";
+        initDeviceDetection();
+        return;
+      }
+      if (res.ok) {
+        document.getElementById("pairing-card").style.display = "none";
+        document.getElementById("main-content").style.display = "grid";
+        const data = await res.json();
+        updateStatusView(data);
+      }
+    } catch (e) {
+      console.log("Connecting...", e);
+    }
+  }
+
+  function updateStatusView(data) {
+    if (data.tvModel) {
+      document.getElementById("tv-model-label").innerText = data.tvModel + " (" + data.ip + ")";
+    }
+    if (data.ram) {
+      const totalMb = Math.round(data.ram.totalKb / 1024);
+      const availMb = Math.round(data.ram.availableKb / 1024);
+      const usedMb = totalMb - availMb;
+      const pct = data.ram.usedPercent;
+      document.getElementById("ram-pct").innerText = pct + "%";
+      document.getElementById("ram-detail").innerText = usedMb + " MB used of " + totalMb + " MB";
+      document.getElementById("ram-bar").style.width = pct + "%";
+    }
+    if (data.network) {
+      document.getElementById("net-throughput").innerText =
+        "RX: " + data.network.rxKbPerSec + " KB/s | TX: " + data.network.txKbPerSec + " KB/s";
+    }
+    if (data.storage) {
+      const freeGb = (data.storage.availableBytes / (1024*1024*1024)).toFixed(1);
+      const totalAppsBytes = (data.storage.appsBytes || 0) + (data.storage.appDataBytes || 0);
+      const appsMb = totalAppsBytes > (1024*1024*1024) 
+        ? (totalAppsBytes / (1024*1024*1024)).toFixed(1) + " GB" 
+        : Math.round(totalAppsBytes / (1024*1024)) + " MB";
+      const mediaMb = Math.round((data.storage.mediaBytes || 0) / (1024*1024));
+      const dlMb = Math.round((data.storage.downloadsBytes || 0) / (1024*1024));
+      const sysGb = ((data.storage.systemBytes || 0) / (1024*1024*1024)).toFixed(1);
+
+      document.getElementById("st-free").innerText = freeGb + " GB";
+      document.getElementById("st-apps").innerText = appsMb;
+      document.getElementById("st-media").innerText = mediaMb + " MB";
+      const elDl = document.getElementById("st-dl");
+      if (elDl) elDl.innerText = dlMb + " MB";
+      document.getElementById("st-sys").innerText = sysGb + " GB";
+
+      drawDonut(data.storage);
+    }
+    if (data.pairedDevices) {
+      renderDeviceList(data.pairedDevices);
+    }
+  }
+
+  function drawDonut(s) {
+    const canvas = document.getElementById("storage-canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const total = s.totalBytes || 1;
+    const free = s.availableBytes || 0;
+    const apps = (s.appsBytes || 0) + (s.appDataBytes || 0);
+    const media = s.mediaBytes || 0;
+    const dl = s.downloadsBytes || 0;
+    const sys = s.systemBytes || 0;
+
+    ctx.clearRect(0, 0, 80, 80);
+    const cx = 40, cy = 40, r = 32, stroke = 10;
+    let start = -0.5 * Math.PI;
+
+    const segments = [
+      { bytes: free, color: '#00E676' },
+      { bytes: apps, color: '#00A8FF' },
+      { bytes: media, color: '#FFB300' },
+      { bytes: dl, color: '#00E5FF' },
+      { bytes: sys, color: '#8B5CF6' }
+    ];
+
+    segments.forEach(seg => {
+      const sweep = (seg.bytes / total) * 2 * Math.PI;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, start, start + sweep);
+      ctx.strokeStyle = seg.color;
+      ctx.lineWidth = stroke;
+      ctx.stroke();
+      start += sweep;
+    });
+  }
+
+  function renderDeviceList(devs) {
+    const el = document.getElementById("device-list");
+    document.getElementById("device-count").innerText = devs.length + " Paired";
+    el.innerHTML = "";
+    devs.forEach(d => {
+      const dur = d.connectedSec < 60 ? d.connectedSec + "s ago" : Math.round(d.connectedSec / 60) + "m ago";
+      const div = document.createElement("div");
+      div.className = "device-item";
+      const browserTag = d.browser ? ` · ${escapeHtml(d.browser)}` : "";
+      const safeLabel = escapeHtml(d.label || d.model || 'Companion');
+      const safeOs = escapeHtml(d.osType || 'Device');
+      const safeIp = escapeHtml(d.ip || '');
+      div.innerHTML = `
+        <div style="display: flex; align-items: center;">
+          <span class="device-icon">${getOsIcon(d.osType)}</span>
+          <div>
+            <div style="font-weight: 600; font-size: 13px;">${safeLabel}</div>
+            <div style="font-size: 11px; color: var(--text-dim);">${safeOs}${browserTag} · ${safeIp}</div>
+          </div>
+        </div>
+        <div style="font-size: 11px; color: var(--green); font-weight: 600;">
+          Connected ${dur}
+        </div>
+      `;
+      el.appendChild(div);
+    });
+  }
+
+  async function getFullDeviceDetails() {
+    let model = "";
+    let platform = "";
+    let osVersion = "";
+
+    if (navigator.userAgentData) {
+      platform = navigator.userAgentData.platform || "";
+      try {
+        const hints = await navigator.userAgentData.getHighEntropyValues([
+          "model", "platform", "platformVersion"
+        ]);
+        if (hints.model) model = hints.model;
+        if (hints.platform) platform = hints.platform;
+        if (hints.platformVersion) osVersion = hints.platformVersion;
+      } catch (e) {}
+    }
+
+    const ua = navigator.userAgent;
+    let browser = "Browser";
+    if (/Edg\//.test(ua)) browser = "Edge";
+    else if (/SamsungBrowser\//.test(ua)) browser = "Samsung Internet";
+    else if (/Chrome\//.test(ua)) browser = "Chrome";
+    else if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) browser = "Safari";
+    else if (/Firefox\//.test(ua)) browser = "Firefox";
+
+    let os = platform || "Device";
+    if (!platform || platform === "Linux" || platform === "") {
+      if (/Android/.test(ua)) os = "Android";
+      else if (/iPhone/.test(ua)) os = "iOS";
+      else if (/iPad/.test(ua)) os = "iPadOS";
+      else if (/Macintosh/.test(ua)) os = "macOS";
+      else if (/Windows/.test(ua)) os = "Windows";
+      else if (/Linux/.test(ua)) os = "Linux";
+    }
+
+    let friendlyModel = model;
+    if (model) {
+      if (/SM-S938/.test(model)) friendlyModel = "Samsung Galaxy S25 Ultra";
+      else if (/SM-S936/.test(model)) friendlyModel = "Samsung Galaxy S25+";
+      else if (/SM-S931/.test(model)) friendlyModel = "Samsung Galaxy S25";
+      else if (/SM-S928/.test(model)) friendlyModel = "Samsung Galaxy S24 Ultra";
+      else if (/SM-S926/.test(model)) friendlyModel = "Samsung Galaxy S24+";
+      else if (/SM-S921/.test(model)) friendlyModel = "Samsung Galaxy S24";
+      else if (/SM-S918/.test(model)) friendlyModel = "Samsung Galaxy S23 Ultra";
+      else if (/SM-S908/.test(model)) friendlyModel = "Samsung Galaxy S22 Ultra";
+      else if (/SM-[A-Z0-9]+/.test(model)) friendlyModel = "Samsung Galaxy (" + model + ")";
+      else if (/Pixel/.test(model)) friendlyModel = "Google Pixel (" + model + ")";
+      else if (/OnePlus|CPH\d+/.test(model)) friendlyModel = "OnePlus (" + model + ")";
+    }
+
+    if (!friendlyModel || friendlyModel === "K") {
+      if (os === "Android" || /Android/.test(ua)) {
+        friendlyModel = "Android Smartphone";
+      } else if (os === "iOS") {
+        friendlyModel = /iPad/.test(ua) ? "iPad" : "iPhone";
+      } else if (os === "macOS") {
+        friendlyModel = "MacBook Pro";
+      } else if (os === "Windows") {
+        friendlyModel = "Windows 11 PC";
+      } else {
+        friendlyModel = "Companion Device";
+      }
+    }
+
+    const label = `${friendlyModel}`;
+    return { label, model: friendlyModel, os, browser };
+  }
+
+  async function initDeviceDetection() {
+    try {
+      const details = await getFullDeviceDetails();
+      const input = document.getElementById("device-name-input");
+      if (input && (!input.value || input.value === "Detecting your device model...")) {
+        input.value = details.label;
+      }
+    } catch (ignored) {}
+  }
+
+  async function submitPin() {
+    const pin = document.getElementById("pin-input").value.trim();
+    if (pin.length !== 6) {
+      showToast("PIN must be 6 digits");
+      return;
+    }
+    const devInput = document.getElementById("device-name-input");
+    const details = await getFullDeviceDetails();
+    const finalLabel = (devInput && devInput.value.trim()) ? devInput.value.trim() : details.label;
+    const hostName = window.location.hostname || "companion.local";
+    let clientId = localStorage.getItem("omnideck_client_id");
+    if (!clientId) {
+      clientId = "client_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now();
+      localStorage.setItem("omnideck_client_id", clientId);
+    }
+    try {
+      const res = await fetch("/api/pair", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pin: pin,
+          clientId: clientId,
+          label: finalLabel,
+          deviceName: finalLabel,
+          model: details.model,
+          osType: details.os,
+          browser: details.browser,
+          hostname: hostName
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.token) {
+        token = data.token;
+        localStorage.setItem("omnideck_token", token);
+        localStorage.setItem("omnideck_device_name", finalLabel);
+        showToast("Paired with TV successfully!");
+        checkAuthAndLoad();
+        loadFiles();
+        fetchNote();
+      } else {
+        showToast("Pairing failed: " + (data.error || "Invalid PIN"));
+      }
+    } catch (e) {
+      showToast("Pairing error: " + e.message);
+    }
+  }
+
+  async function captureScreenshot() {
+    const btn = document.getElementById("btn-screenshot");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerText = "Capturing...";
+    }
+    showToast("Capturing TV screenshot...");
+    try {
+      const res = await fetch("/api/screenshot", { headers: getHeaders() });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        // Auto trigger download to the companion device
+        const a = document.createElement("a");
+        a.href = url;
+        const now = new Date();
+        const ts = now.toISOString().replace(/[-:T.]/g, "").slice(0, 14);
+        a.download = `TV_Screenshot_${ts}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        showToast("✓ Screenshot saved to TV & downloaded to your device!");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast("Screenshot failed: " + (err.error || "TV did not respond"));
+      }
+    } catch (e) {
+      showToast("Screenshot error: " + e.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = "&#128248; Capture TV";
+      }
+    }
+  }
+
+  async function purgeRam() {
+    try {
+      const res = await fetch("/api/system/purge-ram", { method: "POST", headers: getHeaders(), body: "{}" });
+      const data = await res.json();
+      showToast("Purged " + (data.purgedCount || 0) + " background apps!");
+      checkAuthAndLoad();
+    } catch (e) {
+      showToast("Purge failed: " + e.message);
+    }
+  }
+
+  async function runSpeedTest() {
+    const btn = document.getElementById("btn-speed");
+    btn.disabled = true;
+    btn.innerText = "Testing...";
+    document.getElementById("speed-display").innerText = "Measuring...";
+    try {
+      const res = await fetch("/api/speedtest", { method: "POST", headers: getHeaders() });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById("speed-display").innerText = data.mbps + " Mbps";
+        document.getElementById("speed-sub").innerText = "Latency: " + data.latencyMs + " ms &bull; 4K Ultra HD Ready";
+        document.getElementById("speed-bar").style.width = Math.min(100, Math.round(data.mbps)) + "%";
+        showToast("Speed Test Complete: " + data.mbps + " Mbps");
+      } else {
+        showToast("Speed test failed: " + data.error);
+      }
+    } catch (e) {
+      showToast("Speed test error: " + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "Test Speed";
+    }
+  }
+
+  async function fetchNote() {
+    try {
+      const res = await fetch("/api/notes", { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.active && data.active.text) {
+          document.getElementById("note-input").value = data.active.text;
+        } else {
+          document.getElementById("note-input").value = data.note || "";
+        }
+        renderClipHistory(data.history || []);
+      }
+    } catch (ignored) {}
+  }
+
+  function renderClipHistory(history) {
+    const list = document.getElementById("clip-history-list");
+    if (!list) return;
+    list.innerHTML = "";
+    if (!history || history.length === 0) {
+      list.innerHTML = "<div style='font-size: 11px; color: var(--text-muted); padding: 6px 0;'>No previous clips</div>";
+      return;
+    }
+    history.forEach(item => {
+      const d = document.createElement("div");
+      d.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; margin-bottom: 4px; background: rgba(255,255,255,0.03); border-radius: 8px; font-size: 12px;";
+      const timeStr = Math.round((Date.now() - (item.timestampMs || Date.now())) / 60000) + "m ago";
+      d.innerHTML = `
+        <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 75%;">
+          <span style="color: var(--accent); font-weight: 600; font-size: 10px; margin-right: 6px;">[${escapeHtml(item.sender || 'Device')}]</span>
+          <span>${escapeHtml(item.text || '')}</span>
+          <span style="color: var(--text-muted); font-size: 10px; margin-left: 6px;">${timeStr}</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 10px;" onclick="copyClip('${encodeURIComponent(item.text)}')">Copy</button>
+      `;
+      list.appendChild(d);
+    });
+  }
+
+  function copyClip(encodedText) {
+    const text = decodeURIComponent(encodedText);
+    navigator.clipboard.writeText(text).then(() => {
+      showToast("Copied clip to clipboard!");
+    }).catch(() => {
+      document.getElementById("note-input").value = text;
+      showToast("Pasted into input box!");
+    });
+  }
+
+  async function sendNote() {
+    const text = document.getElementById("note-input").value;
+    const deviceName = localStorage.getItem("omnideck_device_name") || "Web Companion";
+    try {
+      const res = await fetch("/api/notes", {
+        method: "POST",
+        headers: { ...getHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text, sender: deviceName })
+      });
+      if (res.ok) {
+        showToast("Sent and copied to TV clipboard!");
+        fetchNote();
+      }
+    } catch (e) {
+      showToast("Error sending note");
+    }
+  }
+
+  async function clearClipboard() {
+    if (!confirm("Clear shared clipboard history?")) return;
+    try {
+      const res = await fetch("/api/notes/clear", { method: "POST", headers: getHeaders() });
+      if (res.ok) {
+        showToast("Clipboard history cleared!");
+        document.getElementById("note-input").value = "";
+        renderClipHistory([]);
+      }
+    } catch (e) {
+      showToast("Error clearing clipboard");
+    }
+  }
+
+
+
+  async function loadFiles() {
+    try {
+      const res = await fetch("/api/files/list", { headers: getHeaders() });
+      if (res.ok) {
+        const files = await res.json();
+        renderFiles(files);
+      }
+    } catch (ignored) {}
+  }
+
+  function renderFiles(files) {
+    const list = document.getElementById("file-list");
+    list.innerHTML = "";
+    if (!files || files.length === 0) {
+      list.innerHTML = "<div style='color: var(--text-muted); font-size: 13px; text-align: center; padding: 16px;'>No files yet in Download/OmniDeck</div>";
+      return;
+    }
+    files.forEach(f => {
+      const div = document.createElement("div");
+      div.className = "file-item";
+      const safeName = escapeHtml(f.name || 'unnamed');
+      const safeSize = escapeHtml(f.formattedSize || '');
+      const encName = encodeURIComponent(f.name || '');
+      div.innerHTML = `
+        <div>
+          <div class="file-name" title="${safeName}">${safeName}</div>
+          <div style="font-size: 11px; color: var(--text-dim);">${safeSize}</div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary btn-sm" onclick="downloadFile('${encName}')">Get</button>
+          <button class="btn btn-secondary btn-sm" onclick="fileAction('open', '${encName}')">${f.isApk ? "Install" : "Open"}</button>
+          <button class="btn btn-danger btn-sm" onclick="fileAction('delete', '${encName}')">&#10005;</button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  async function downloadFile(encodedName) {
+    try {
+      const res = await fetch("/api/files/ticket?name=" + encodedName, { headers: getHeaders() });
+      const data = await res.json();
+      if (data.ticket) {
+        window.location.href = "/api/files/download?ticket=" + data.ticket;
+      }
+    } catch (e) {
+      showToast("Download error: " + e.message);
+    }
+  }
+
+  async function fileAction(action, encodedName) {
+    try {
+      const res = await fetch("/api/files/action", {
+        method: "POST",
+        headers: { ...getHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ action: action, name: decodeURIComponent(encodedName) })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(action === "delete" ? "Deleted" : "Opened on TV");
+        loadFiles();
+        checkAuthAndLoad();
+      }
+    } catch (e) {
+      showToast("Error: " + e.message);
+    }
+  }
+
+  function handleFileSelect(evt) {
+    const file = evt.target.files[0];
+    if (file) uploadFile(file);
+  }
+
+  const dropZone = document.getElementById("drop-zone");
+  dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.style.borderColor = "var(--accent)"; });
+  dropZone.addEventListener("dragleave", () => { dropZone.style.borderColor = "var(--card-border)"; });
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = "var(--card-border)";
+    if (e.dataTransfer.files.length > 0) uploadFile(e.dataTransfer.files[0]);
+  });
+
+  function uploadFile(file) {
+    const pWrap = document.getElementById("upload-progress");
+    const pBar = document.getElementById("upload-bar");
+    const pStatus = document.getElementById("upload-status");
+    const pPercent = document.getElementById("upload-percent");
+
+    pWrap.style.display = "block";
+    pStatus.innerText = "Uploading " + file.name + "...";
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/files/upload?name=" + encodeURIComponent(file.name));
+    if (token) xhr.setRequestHeader("Authorization", "Bearer " + token);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        pBar.style.width = pct + "%";
+        pPercent.innerText = pct + "%";
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        showToast("Uploaded successfully!");
+        loadFiles();
+        checkAuthAndLoad();
+      } else if (xhr.status === 507) {
+        showToast("Upload rejected: 500 MB storage floor reached!");
+      } else {
+        showToast("Upload failed: HTTP " + xhr.status);
+      }
+      setTimeout(() => { pWrap.style.display = "none"; }, 2000);
+    };
+
+    xhr.onerror = () => {
+      showToast("Upload network failed");
+      pWrap.style.display = "none";
+    };
+
+    xhr.send(file);
+  }
+
+  checkAuthAndLoad();
+  loadFiles();
+  fetchNote();
+  setInterval(checkAuthAndLoad, 5000);
+
+  window.addEventListener("beforeunload", () => {
+    if (token) {
+      try {
+        const payload = JSON.stringify({ token: token });
+        const blob = new Blob([payload], { type: "application/json" });
+        navigator.sendBeacon("/api/disconnect", blob);
+      } catch (ignored) {}
+    }
+  });
+</script>
+</body>
+</html>
